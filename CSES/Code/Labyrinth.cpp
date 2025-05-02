@@ -1,20 +1,6 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-/*
-Input: can move in o, cannot move in x
-6 6
-Aooxoo
-oxoooo
-oxoooo
-ooooxx
-Boooxo
-oooxxx
-Output:
-Yes. The minimum steps needed to go from 'A' to 'B' is 4
-Move: DDDD
-*/
-
 int n, m, si, sj, ei, ej;
 char a[1001][1001];
 bool visited[1001][1001];
