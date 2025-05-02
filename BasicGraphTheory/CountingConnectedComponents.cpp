@@ -12,7 +12,11 @@ Input:
 5 8
 6 7
 8 9
-Output: 3
+Output:
+Connected Component 1 : 1 2 3 6 7 4
+Connected Component 2 : 5 8 9
+Connected Component 3 : 10
+The number of connected components: 3
 */
 
 int n, m;
