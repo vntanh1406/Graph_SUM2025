@@ -28,6 +28,10 @@ Tree buildTree(const vector<pair<int, int>>& edges, int& root) {
     return nodes;
 }
 
+bool isLeaf(Node* node) {
+    return node && node->children.empty();
+}
+
 // Substitution cost = 1
 int gamma_sub1(Node* a, Node* b) {
     if (!a && !b) return 0;
@@ -42,62 +46,84 @@ int gamma_sub0(Node* a, Node* b) {
     return 0;
 }
 
-// Backtrack
+// Backtracking
 int backtrack(Node* t1, Node* t2, GammaFunc gamma) {
     if (!t1 && !t2) return 0;
     if (!t1) {
-        int cost = 1; // insert leaf
-        for (auto c : t2->children)
+        int cost = 1;
+        for (auto c : t2->children) {
             cost += backtrack(nullptr, c, gamma);
+        }
         return cost;
     }
+
     if (!t2) {
-        int cost = 1; // delete leaf
-        for (auto c : t1->children)
+        int cost = 1;
+        for (auto c : t1->children) {
             cost += backtrack(c, nullptr, gamma);
+        }
         return cost;
     }
 
     int cost = gamma(t1, t2);
-    int n = t1->children.size(), m = t2->children.size();
-    vector<vector<int>> dp(n + 1, vector<int>(m + 1, 0));
-    // dp[i][j]: Min cost để biến i con đầu tiên của t1 thành j con đầu tiên của t2
+    auto& c1 = t1->children;
+    auto& c2 = t2->children;
+    int n = c1.size(), m = c2.size();
 
-    for (int i = 0; i <= n; ++i)
-        for (int j = 0; j <= m; ++j) {
-            if (i == 0 && j == 0) dp[i][j] = 0;
-            // i==0: chưa có con của t1, phải chèn toàn bộ j con của t2
-            else if (i == 0) dp[i][j] = dp[i][j - 1] + backtrack(nullptr, t2->children[j - 1], gamma);
-            // j==0: chưa có con nào của t2, phải xóa toàn bộ i con của t1
-            else if (j == 0) dp[i][j] = dp[i - 1][j] + backtrack(t1->children[i - 1], nullptr, gamma);
-            else {
-                /*
-                Để chuyển con i của t1 thành con j của t2, cần tốn cost để
-                biến cây con t1->children[i-1] thành t2->children[j-1]
-                */
-                int subCost = backtrack(t1->children[i - 1], t2->children[j - 1], gamma);
-                /*
-                Để chuyển con i của t1 thành null của t2, cần tốn cost để
-                biến cây con t1->children[i-1] thành null của t2
-                */
-                int delCost = backtrack(t1->children[i - 1], nullptr, gamma);
-                /*
-                Để chuyển null của t1 thành con j của t2, cần tốn cost để
-                biến null của t1 thành t2->children[j-1]
-                */
-                int insCost = backtrack(nullptr, t2->children[j - 1], gamma);
+    // Nếu cả hai đều là leaf
+    if (n == 0 && m == 0) {
+        return cost;
+    }
 
-                dp[i][j] = min({ dp[i - 1][j - 1] + subCost, // thay con i của t1 thành con j của t2
-                                 dp[i - 1][j] + delCost, // xóa con i
-                                 dp[i][j - 1] + insCost }); // chèn con j
-            }
+    int minCost = INT_MAX;
+
+    function<void(int, int, int)> tryAlign = [&](int i, int j, int currentCost) {
+        if (i == n && j == m) {
+            // Đã xử lý hết children của cả hai
+            minCost = min(minCost, currentCost);
+            return;
         }
 
-    return cost + dp[n][m];
+        if (i == n) {
+            // Hết children của t1, phải insert tất cả children còn lại của t2
+            int insertCost = currentCost;
+            for (int k = j; k < m; k++) {
+                insertCost += backtrack(nullptr, c2[k], gamma);
+            }
+            minCost = min(minCost, insertCost);
+            return;
+        }
+
+        if (j == m) {
+            // Hết children của t2, phải delete tất cả children còn lại của t1
+            int deleteCost = currentCost;
+            for (int k = i; k < n; k++) {
+                deleteCost += backtrack(c1[k], nullptr, gamma);
+            }
+            minCost = min(minCost, deleteCost);
+            return;
+        }
+
+        // 1: Substitute c1[i] with c2[j]
+        int subCost = backtrack(c1[i], c2[j], gamma);
+        tryAlign(i + 1, j + 1, currentCost + subCost);
+
+        // 2: Delete c1[i]
+        int delCost = backtrack(c1[i], nullptr, gamma);
+        tryAlign(i + 1, j, currentCost + delCost);
+
+        // 3: Insert c2[j]
+        int insCost = backtrack(nullptr, c2[j], gamma);
+        tryAlign(i, j + 1, currentCost + insCost);
+    };
+
+    tryAlign(0, 0, 0);
+
+    return cost + minCost;
 }
 
 int main() {
-    int n1, n2; // Số cạnh t1, t2
+    int n1, n2;
     vector<pair<int, int>> edges1, edges2;
 
     cin >> n1;
@@ -112,21 +138,21 @@ int main() {
         edges2.emplace_back(u, v);
     }
 
-    int root1, root2;
+    int root1 = -1, root2 = -1;
     Tree T1 = buildTree(edges1, root1);
     Tree T2 = buildTree(edges2, root2);
 
-    int backtrack_1 = backtrack(T1[root1], T2[root2], gamma_sub1);
-    int backtrack_0 = backtrack(T1[root1], T2[root2], gamma_sub0);
+    int bt1 = backtrack(T1[root1], T2[root2], gamma_sub1);
+    int bt0 = backtrack(T1[root1], T2[root2], gamma_sub0);
+
     cout << "\n===Backtrack===";
-    cout << "\nSubstitution cost = 1: " << backtrack_1;
-    cout << "\nSubstitution cost = 0: " << backtrack_0;
+    cout << "\nSubstitution cost = 1: " << bt1;
+    cout << "\nSubstitution cost = 0: " << bt0;
 
     for (auto& [id, node] : T1) delete node;
     for (auto& [id, node] : T2) delete node;
     return 0;
 }
-
 
 /*
 8
