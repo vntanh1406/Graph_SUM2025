@@ -47,7 +47,7 @@ int p_selfcjg_recursive(int n, int k) {
             return;
         }
         if (parts <= 0 || remain <= 0) return;
-        for (int val = min(maxVal, remain); val >= 1; val--) {
+        for (int val = min(maxVal, remain); val >= 1; --val) {
             current.push_back(val);
             generate(remain - val, parts - 1, val);
             current.pop_back();
@@ -83,7 +83,7 @@ int p_selfcjg_dp(int n, int k) {
                     return;
                 }
                 if (currParts <= 0 || remain <= 0) return;
-                for (int val = min(maxVal, remain); val >= 1; val--) {
+                for (int val = min(maxVal, remain); val >= 1; --val) {
                     current.push_back(val);
                     generate(remain - val, currParts - 1, val);
                     current.pop_back();
