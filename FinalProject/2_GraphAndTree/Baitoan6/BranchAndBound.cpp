@@ -51,10 +51,12 @@ int gamma_sub0(Node* a, Node* b) {
     return 0;
 }
 
+// lb: min cost còn lại nếu chọn nhánh hiện tại
+// Nếu chi phí hiện tại + lb >= minCost => prune
 int computeLowerBound(const vector<Node*>& c1, const vector<Node*>& c2,
                       int i, int j, GammaFunc gamma) {
-    int n1 = c1.size() - i;
-    int n2 = c2.size() - j;
+    int n1 = c1.size() - i; // số con còn lại của t1 cần xử lý
+    int n2 = c2.size() - j; // số con còn lại của t2 cần xử lý
 
     if (n1 == 0 && n2 == 0) return 0;
     if (n1 == 0) {
@@ -73,28 +75,6 @@ int computeLowerBound(const vector<Node*>& c1, const vector<Node*>& c2,
     }
 
     return abs(n1 - n2);
-}
-
-int computeUpperBound(const vector<Node*>& c1, const vector<Node*>& c2,
-                      int i, int j, GammaFunc gamma) {
-    int n = c1.size() - i;
-    int m = c2.size() - j;
-    int cost = 0;
-
-    int p1 = i, p2 = j;
-    while (p1 < c1.size() && p2 < c2.size()) {
-        cost += 1; // assume max 1 cost per substitution
-        p1++;
-        p2++;
-    }
-    while (p1 < c1.size()) {
-        cost += countNodes(c1[p1++]);
-    }
-    while (p2 < c2.size()) {
-        cost += countNodes(c2[p2++]);
-    }
-
-    return cost;
 }
 
 int branchAndBoundPure(Node* t1, Node* t2, GammaFunc gamma) {
@@ -123,7 +103,7 @@ int branchAndBoundPure(Node* t1, Node* t2, GammaFunc gamma) {
 
     function<void(int, int, int)> tryAlign = [&](int i, int j, int currentCost) {
         int lowerBound = currentCost + computeLowerBound(c1, c2, i, j, gamma);
-        if (lowerBound >= minCost) return;
+        if (lowerBound >= minCost) return; // prune
 
         if (i == n && j == m) {
             minCost = min(minCost, currentCost);
