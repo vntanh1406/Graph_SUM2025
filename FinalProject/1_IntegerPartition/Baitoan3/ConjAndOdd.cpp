@@ -79,7 +79,7 @@ void genDistinctOddPartitions(int n, int start, vector<int>& curr, vector<vector
 
     for (int odd = start; odd <= n; odd += 2) {
         curr.push_back(odd);
-        genDistinctOddPartitions(n - odd, odd + 2, curr, result);  // tăng lên để tránh lặp
+        genDistinctOddPartitions(n - odd, odd + 2, curr, result);
         curr.pop_back();
     }
 }
