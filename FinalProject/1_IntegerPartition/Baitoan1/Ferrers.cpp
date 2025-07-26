@@ -13,7 +13,7 @@ void genOrderedPartitions(int cur, int k, int nRemain, vector<int>& part, vector
         if (nRemain==0) res.push_back(part);
         return;
     }
-    //vì mỗi phần tử >= 1, nên phần tử tại cur có thể nhận giá trị từ 1 đến (nRemain - số phần tử còn lại(
+    //vì mỗi phần tử >= 1, nên phần tử tại cur có thể nhận giá trị từ 1 đến (nRemain - số phần tử còn lại)
     int minVal=1;
     int maxVal=nRemain - (k-cur-1);
     for (int val=minVal; val<=maxVal; ++val) {
@@ -28,21 +28,17 @@ void genPartitions(int cur, int k, int nRemain, vector<int>& part, vector<vector
         if (nRemain==0) res.push_back(part);
         return;
     }
-
-    //đảm bảo dãy không giảm
-    int startVal=(cur==0) ? 1 : part[cur-1];
-    int endVal=nRemain - (k-cur-1);
-    for (int val=startVal; val<=endVal; ++val) {
-        part[cur]=val;
-        genPartitions(cur+1, k, nRemain-val, part, res);
+    int startVal=(cur==0) ? nRemain : min(nRemain, part[cur-1]);
+    int endVal=1;
+    for (int val=startVal; val>=endVal; --val) {
+        part[cur] = val;
+        genPartitions(cur + 1, k, nRemain-val, part, res);
     }
 }
 
-
-
 void ferrers(const vector<int>& part) {
     for (int val:part) {
-        for (int i=0; i<val; ++i) cout << '*';
+        for (int i=0; i<val; ++i) cout<<'*';
         cout<<'\n';
     }
 }
@@ -77,7 +73,7 @@ int main() {
     genPartitions(0, k, n, part, partitions);
     //genOrderedPartitions(0, k, n, part, partitions);
 
-    cout<<"Co "<<partitions.size()<<" phan khoach p_"<<k<<"("<<n<<"):\n\n";
+    cout<<"Co p_"<<k<<"("<<n<<") = "<<partitions.size()<<" phan khoach cua "<<n<<" co "<<k<<" phan tu:\n\n";
 
     int cnt=1;
     for (const auto& p : partitions) {
